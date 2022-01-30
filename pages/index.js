@@ -1,34 +1,9 @@
 import { Box, Button, Text, TextField, Image } from '@skynexui/components';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
 import appConfig from '../config.json';
 
-function GlobalStyle(){
-  return(
-    <style global jsx>{`
-      *{
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        list-style:none;
-      }
-      body{
-        font-family: 'Open Sans', sans-serif;
-      }
-      /* App fit Height */
-      html,body, #__next{
-        min-height: 100vh;
-        display: flex;
-        flex: 1;
-      }
-      #__next{
-        flex: 1;
-      }
-      #__next > *{
-        flex: 1;
-      }
-      /* App fit Height */
-    `}</style>
-  );
-}
+
 
 function Titulo(props){
   const Tag = props.tag || h2;
@@ -60,11 +35,21 @@ function Titulo(props){
 // export default HomePage;
 
 export default function PaginaInicial() {
-  const username = 'Beatrizduarte';
+  const [username, setUsername] = useState('Beatrizduarte');
+  const [userValidation, setUserValidation] = useState({});
+  const roteamento = useRouter();
+
+  // const validationUser = () => {
+  //   if(username.length < 3){
+  //     return setError({
+  //       validation: true,
+  //       text: 'O nome de usuario deve ter 3 ou mais caracteres'
+  //     })
+  //   }
+  // }
 
   return (
     <>
-      <GlobalStyle />
       <Box
         styleSheet={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -91,6 +76,12 @@ export default function PaginaInicial() {
           {/* Formulário */}
           <Box
             as="form"
+            onSubmit={function (infosDosEventos){
+              infosDosEventos.preventDefault();
+              if(!userValidation.validation){
+                roteamento.push('/chat');
+              }
+            }}
             styleSheet={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               width: { xs: '100%', sm: '50%' }, textAlign: 'center', marginBottom: '32px',
@@ -102,6 +93,11 @@ export default function PaginaInicial() {
             </Text>
 
             <TextField
+              value={username}
+              onChange={function (event){
+                const valor = event.target.value;
+                setUsername(valor);
+              }}
               fullWidth
               textFieldColors={{
                 neutral: {
@@ -115,6 +111,17 @@ export default function PaginaInicial() {
             <Button
               type='submit'
               label='Entrar'
+              onClick={() => {
+                if(username.length >= 3){
+                  return setUserValidation({
+                    validation: false, text: ''
+                  })
+                }else{
+                  return setUserValidation({
+                    validation: true, text: 'Nome de usuário deve conter 3 ou mais caracteres'
+                  })
+                }
+              }}
               fullWidth
               buttonColors={{
                 contrastColor: appConfig.theme.colors.neutrals["000"],
@@ -123,6 +130,15 @@ export default function PaginaInicial() {
                 mainColorStrong: appConfig.theme.colors.primary[600],
               }}
             />
+            {userValidation && (
+              <Text
+                styleSheet={{
+                  color: appConfig.theme.colors.neutrals[1000],
+                }}
+              >
+                {userValidation.text}
+              </Text>
+            )}
           </Box>
           {/* Formulário */}
 
