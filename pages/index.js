@@ -22,31 +22,10 @@ function Titulo(props){
   );
 }
 
-// function HomePage(){
-//   return(
-//     <div>
-//       <GlobalStyle />
-//       <Title tag="h2">Boas vindas de volta!</Title>
-//       <h2>Discord - Alura Matrix</h2>
-//     </div>
-//   );
-// }
-
-// export default HomePage;
-
 export default function PaginaInicial() {
   const [username, setUsername] = useState('Beatrizduarte');
   const [userValidation, setUserValidation] = useState({});
   const roteamento = useRouter();
-
-  // const validationUser = () => {
-  //   if(username.length < 3){
-  //     return setError({
-  //       validation: true,
-  //       text: 'O nome de usuario deve ter 3 ou mais caracteres'
-  //     })
-  //   }
-  // }
 
   return (
     <>
@@ -79,7 +58,7 @@ export default function PaginaInicial() {
             onSubmit={function (infosDosEventos){
               infosDosEventos.preventDefault();
               if(!userValidation.validation){
-                roteamento.push('/chat');
+              roteamento.push(`/chat?username=${username}`);
               }
             }}
             styleSheet={{

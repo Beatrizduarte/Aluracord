@@ -1,14 +1,63 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import appConfig from '../config.json';
+import { useRouter } from 'next/router';
+import { createClient } from '@supabase/supabase-js'
+import { ButtonSendSticker } from '../src/components/ButtonSendStickers';
+
+
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+const supabaseClient = createClient(URL, KEY);
 
 export default function ChatPage() {
+    const roteamento = useRouter();
+    const usuarioLogado = roteamento.query.username;
+    console.log(usuarioLogado)
+    const [mensagem, setMensagem] = useState('');
+    const [listaDeMensagem, setListaDeMensagem] = useState([
+        {
+            id: 1,
+            from: 'BeatrizDuarte',
+            text: ':sticker: http://2.bp.blogspot.com/-d21tffsTIQo/U_H9QjC69gI/AAAAAAAAKqM/wnvOyUr6a_I/s1600/Pikachu%2B2.gif'
+        }
+    ]);
 
-  const [mensagem, setMensagem] = useState('');
+   useEffect(() =>{
+    supabaseClient
+    .from('mensagens')
+    .select('*')
+    .order('id', { ascending: false})
+    .then(({ data }) =>{
+      console.log('dados da consulta', data);
+    //   setListaDeMensagem(data);
+    });
 
-    // Sua lógica vai aqui
+   }, []);
 
-    // ./Sua lógica vai aqui
+    function handleNovaMensagem(novaMensagem){
+      const mensagem = {
+        from: usuarioLogado,
+        text: novaMensagem,
+      }
+
+      supabaseClient
+        .from('mensagens')
+        .insert([
+          mensagem
+        ])
+        .then(({ data }) =>{
+          console.log('criando mensagem:', data);
+
+          setListaDeMensagem([
+            data[0],
+            ...listaDeMensagem,
+          ]);
+        })
+
+        setMensagem('');
+    }
     return (
         <Box
             styleSheet={{
@@ -45,10 +94,9 @@ export default function ChatPage() {
                         borderRadius: '5px',
                         padding: '16px',
                     }}
-                >   
-                  {mensagem}
+                >
 
-                    {/* <MessageList mensagens={[]} /> */}
+                    <MessageList mensagens={listaDeMensagem} />
 
                     <Box
                         as="form"
@@ -64,6 +112,14 @@ export default function ChatPage() {
 
                               setMensagem(valor);
                             }}
+                            onKeyPress={(e) =>{
+                              if(e.key === 'Enter'){
+                                e.preventDefault();
+                                handleNovaMensagem(mensagem)
+                                
+                                
+                              }
+                            }}
                             placeholder="Insira sua mensagem aqui..."
                             type="textarea"
                             styleSheet={{
@@ -77,6 +133,7 @@ export default function ChatPage() {
                                 color: appConfig.theme.colors.neutrals[200],
                             }}
                         />
+                        <ButtonSendSticker />
                     </Box>
                 </Box>
             </Box>
@@ -116,8 +173,9 @@ function MessageList(props) {
                 marginBottom: '16px',
             }}
         >
-
-            <Text
+          {props.mensagens.map((mensagem) =>{
+            return(
+              <Text
                 key={mensagem.id}
                 tag="li"
                 styleSheet={{
@@ -128,7 +186,7 @@ function MessageList(props) {
                         backgroundColor: appConfig.theme.colors.neutrals[700],
                     }
                 }}
-            >
+              >
                 <Box
                     styleSheet={{
                         marginBottom: '8px',
@@ -142,10 +200,10 @@ function MessageList(props) {
                             display: 'inline-block',
                             marginRight: '8px',
                         }}
-                        src={`https://github.com/vanessametonini.png`}
+                        src={`https://github.com/${mensagem.from}.png`}
                     />
                     <Text tag="strong">
-                        {mensagem.de}
+                        {mensagem.from}
                     </Text>
                     <Text
                         styleSheet={{
@@ -157,9 +215,15 @@ function MessageList(props) {
                     >
                         {(new Date().toLocaleDateString())}
                     </Text>
-                </Box>
-                {mensagem.texto}
-            </Text>
+                  </Box>
+                  {mensagem.text.startsWith(':sticker:') && (
+                      'é sticker'
+                  )}
+                  {/* {mensage-m.text} */}
+              </Text>
+            );
+          })}
+            
         </Box>
     )
 }
