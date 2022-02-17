@@ -11,18 +11,20 @@ const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 const supabaseClient = createClient(URL, KEY);
 
+function escutaMensagensEmTempoReal(adicionaMensagem) {
+  return supabaseClient
+    .from('mensagens')
+    .on('INSERT', (respostaLive) => {
+      adicionaMensagem(respostaLive.new);
+    })
+    .subscribe();
+}
+
 export default function ChatPage() {
     const roteamento = useRouter();
     const usuarioLogado = roteamento.query.username;
-    console.log(usuarioLogado)
     const [mensagem, setMensagem] = useState('');
-    const [listaDeMensagem, setListaDeMensagem] = useState([
-        {
-            id: 1,
-            from: 'BeatrizDuarte',
-            text: ':sticker: http://2.bp.blogspot.com/-d21tffsTIQo/U_H9QjC69gI/AAAAAAAAKqM/wnvOyUr6a_I/s1600/Pikachu%2B2.gif'
-        }
-    ]);
+    const [listaDeMensagem, setListaDeMensagem] = useState([]);
 
    useEffect(() =>{
     supabaseClient
@@ -30,8 +32,16 @@ export default function ChatPage() {
     .select('*')
     .order('id', { ascending: false})
     .then(({ data }) =>{
-      console.log('dados da consulta', data);
-    //   setListaDeMensagem(data);
+      setListaDeMensagem(data);
+    });
+
+    escutaMensagensEmTempoReal((novaMensagem) =>{
+       setListaDeMensagem((valorAtualDaLista) =>{
+          return [
+            novaMensagem,
+            ...valorAtualDaLista,
+          ]
+       });
     });
 
    }, []);
@@ -48,12 +58,7 @@ export default function ChatPage() {
           mensagem
         ])
         .then(({ data }) =>{
-          console.log('criando mensagem:', data);
-
-          setListaDeMensagem([
-            data[0],
-            ...listaDeMensagem,
-          ]);
+            console.log('Criando mensagem:' , data);
         })
 
         setMensagem('');
@@ -133,7 +138,11 @@ export default function ChatPage() {
                                 color: appConfig.theme.colors.neutrals[200],
                             }}
                         />
-                        <ButtonSendSticker />
+                        <ButtonSendSticker 
+                            onStickerClick={(sticker) =>{
+                                handleNovaMensagem(`:sticker:${sticker}`)
+                            }}
+                        />
                     </Box>
                 </Box>
             </Box>
@@ -160,7 +169,6 @@ function Header() {
 }
 
 function MessageList(props) {
-    console.log('MessageList', props);
     return (
         <Box
             tag="ul"
@@ -216,10 +224,14 @@ function MessageList(props) {
                         {(new Date().toLocaleDateString())}
                     </Text>
                   </Box>
-                  {mensagem.text.startsWith(':sticker:') && (
-                      'é sticker'
-                  )}
-                  {/* {mensage-m.text} */}
+                  {mensagem.text.startsWith(':sticker:') ? (
+                      <Image src={mensagem.text.replace(':sticker:', '')} />
+                  )
+                  : 
+                  (
+                      mensagem.text
+                  )
+                }
               </Text>
             );
           })}
